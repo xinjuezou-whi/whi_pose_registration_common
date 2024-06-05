@@ -1,0 +1,20 @@
+- name: getscan_1
+  model_cloud: getscan_1.pcd
+  feature_pose:
+    - -0.008
+    - 0.798
+    - 0
+  cur_pose:
+    - -0.219
+    - -0.157
+    - 0
+- name: getscan_2
+  model_cloud: getscan_2.pcd
+  feature_pose:
+    - 0.002
+    - 0.734
+    - 0
+  cur_pose:
+    - 2.664
+    - 0.085
+    - 0

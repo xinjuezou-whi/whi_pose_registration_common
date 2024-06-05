@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+
+  <node name="whi_tool_create_pcd_pattern" pkg="whi_tool_create_pcd_pattern" type="whi_tool_create_pcd_pattern" output="screen">
+    <rosparam command="load" file="$(find whi_tool_create_pcd_pattern)/config/config.yaml"/>
+  </node>
+
+</launch>

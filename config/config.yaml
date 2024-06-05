@@ -1,0 +1,8 @@
+#configfile: /home/nvidia/catkin_workspace/src/whi_pose_registration/config/pose_registration.yaml
+feature_file: /home/nvidia/catkin_workspace/src/regist_getcloud_tool/config/features1.yaml
+pcd_file_path: /home/nvidia/catkin_workspace/src/regist_getcloud_tool/pcd/
+pcd_file_prefix: getscan
+feature_range: [2, -2, 1, -2]   # xmax  xmin  ymax  ymin
+map_frame: odom
+base_link_frame: base_link
+scan_topic: /scan
