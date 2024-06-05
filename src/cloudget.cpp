@@ -1,3 +1,18 @@
+/******************************************************************
+node to handle create pattern cloud pcd tool
+
+Features:
+- create pattern cloud pcd tool
+
+Written by Yue Zhou, sevendull@163.com
+
+Apache License Version 2.0, check LICENSE for more information.
+All text above must be included in any redistribution.
+
+Changelog:
+2024-06-05: Initial version
+2024-06-06:  
+******************************************************************/
 #include <ros/ros.h>
 #include <pcl/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -400,9 +415,16 @@ void sigintHandler(int sig)
 	// All the default sigint handler does is call shutdown()
 	ros::shutdown();
 }
+
+// type key s to get scan cloud 
  
 int main (int argc, char **argv)
 {
+
+    std::cout << "\nWHI tool create pcd pattern VERSION 00.01.1" << std::endl;
+	std::cout << "Copyright © 2024-2025 Wheel Hub Intelligent Co.,Ltd. All rights reserved\n" << std::endl;
+    std::cout << "input key 's' to get scan cloud " << std::endl;
+
     const std::string nodeName("whi_tool_create_pcd_pattern");
     ros::init(argc, argv, nodeName);
     ros::NodeHandle nh(nodeName);
@@ -426,32 +448,6 @@ int main (int argc, char **argv)
     ros::Subscriber bat_sub = nh.subscribe(scan_topic, 10, cloudCBLaser);
     ros::AsyncSpinner spinner(3);
     spinner.start();
-/*
-    if (cloudscan.points.size() > 0 )
-    {
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>(cloudscan));
-        
-
-        pcl::visualization::PCLVisualizer::Ptr view_final (new pcl::visualization::PCLVisualizer("3D Viewer"));
-        view_final -> setBackgroundColor(0,0,0);
-    
-        //设定目标点云颜色,设置目标点云的大小,并加载到可视化窗口中
-        pcl::visualization::PointCloudColorHandlerCustom<pcl::PointXYZ>  target_color(cloud_ptr, 255, 0, 0);
-        view_final->addPointCloud<pcl::PointXYZ>(cloud_ptr, target_color, "target cloud");
-        view_final->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "target cloud");
-    
-        // 开始可视化窗口
-        view_final->addCoordinateSystem(1.0, "global");
-        view_final->initCameraParameters();
-    
-        // 循环,直至窗口被关闭
-        while (!view_final->wasStopped()) {
-            view_final->spinOnce(100);
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    }
-
-*/
 
     ros::waitForShutdown();	
 
