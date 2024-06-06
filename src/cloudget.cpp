@@ -30,6 +30,7 @@ Changelog:
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <signal.h>
 #include "whi_pose_registration_common/pcl_visualize.h"
+#include "whi_pose_registration_common/pose_utilities.h"
 #include <fstream>
 
 struct Feature
@@ -67,6 +68,8 @@ State state_;
 std::shared_ptr<std::thread> th_handler = nullptr;
 std::atomic_bool terminating = { false };
 std::mutex mtx_state_;
+std::vector<double> laser_pose;
+std::string laser_frame;
 
 geometry_msgs::TransformStamped listenTf(const std::string& DstFrame, const std::string& SrcFrame,
     const ros::Time& Time)
@@ -187,6 +190,37 @@ void cloudCBLaser(const sensor_msgs::LaserScan::ConstPtr& Laser)
 
 
         pcl::copyPointCloud(cloudout, cloudscan);
+        geometry_msgs::TransformStamped lasertransform;
+        lasertransform.header.frame_id = laser_frame;
+        lasertransform.child_frame_id = laser_frame;
+        lasertransform.header.stamp = ros::Time::now();
+    
+        //  
+        lasertransform.transform.translation.x = laser_pose[0];
+        lasertransform.transform.translation.y = laser_pose[1];
+        lasertransform.transform.translation.z = laser_pose[2];
+        tf2::Quaternion q;
+        q.setRPY(laser_pose[3]*M_PI/180, laser_pose[4]*M_PI/180, laser_pose[5]*M_PI/180);  
+        lasertransform.transform.rotation.x = q.x();
+        lasertransform.transform.rotation.y = q.y();
+        lasertransform.transform.rotation.z = q.z();
+        lasertransform.transform.rotation.w = q.w();        
+
+        for (int i= 0; i < cloudscan.points.size(); i++)
+        {
+            geometry_msgs::Pose pointpose,aftertrans_pose;
+            pointpose.position.x = cloudscan.points[i].x;
+            pointpose.position.y = cloudscan.points[i].y;
+            pointpose.position.z = cloudscan.points[i].z;
+            pointpose.orientation = PoseUtilities::fromEuler(0.0, 0.0, 0.0);
+            aftertrans_pose = PoseUtilities::applyTransform(pointpose, lasertransform);
+            cloudscan.points[i].x = aftertrans_pose.position.x;
+            cloudscan.points[i].y = aftertrans_pose.position.y;
+            cloudscan.points[i].z = aftertrans_pose.position.z;
+
+        }
+
+
 
         ROS_INFO("cloudscan.points.size() = %d ",cloudscan.points.size()) ;
         if(!(cloudscan.points.size() > 0))
@@ -256,93 +290,6 @@ void cloudCBLaser(const sensor_msgs::LaserScan::ConstPtr& Laser)
         new_array.push_back(getinitvertical);
         new_array.push_back(0.0);
 
-        /*
-        std::vector<Feature> configfeatures;
-        for (const auto& mapNode : config_node) 
-        {
-            Feature onefeature;
-            if (mapNode.Type() == YAML::NodeType::Map) 
-            {
-                for (const auto& kv : mapNode) 
-                {
-                    if (kv.first.as<std::string>()=="name")
-                    {
-                        onefeature.name =  kv.second.as<std::string>();
-                    }
-                    if (kv.first.as<std::string>()=="model_cloud")
-                    {
-                        onefeature.model_cloud =  kv.second.as<std::string>();
-                    }                
-                    if (kv.first.as<std::string>()=="feature_pose")
-                    {
-                        for (const auto& item : kv.second)
-                        {
-                            onefeature.feature_pose.push_back(item.as<double>());
-                        }
-                    }
-                    if (kv.first.as<std::string>()=="cur_pose")
-                    {
-                        for (const auto& item : kv.second)
-                        {
-                            onefeature.cur_pose.push_back(item.as<double>());
-                        }
-                    }                
-                    if (kv.first.as<std::string>()=="target_rela_pose")
-                    {
-                        //std::cout << "feature_pose:" << std::endl;
-                        for (const auto& item : kv.second)
-                        {
-                            //std::cout << item.as<double>() << std::endl;
-                            onefeature.target_rela_pose.push_back(item.as<double>());
-                        }
-                    }                
-
-                }
-                std::cout << "----\n"; // 分隔每个映射
-            }
-            configfeatures.push_back(onefeature);
-        }
-
-        std::vector<Feature> configfeatures;
-        YAML::Node feature_array;
-        for (auto onefeature : configfeatures)
-        {
-            YAML::Node feature_node;
-            feature_node["name"] = onefeature.name;
-            feature_node["model_cloud"] = onefeature.model_cloud;
-            if (onefeature.name == "cabinet" )
-            {
-                feature_node["feature_pose"].push_back(getinithorizon);
-                feature_node["feature_pose"].push_back(getinitvertical);
-                feature_node["feature_pose"].push_back(0.0);
-
-                feature_node["cur_pose"].push_back(curpose.position.x);
-                feature_node["cur_pose"].push_back(curpose.position.y);
-                feature_node["cur_pose"].push_back(curpose.position.z);
-            }
-            else
-            {
-                for (auto poseitem : onefeature.feature_pose)
-                {
-                    feature_node["feature_pose"].push_back(poseitem);
-                }
-                for (auto poseitem : onefeature.cur_pose)
-                {
-                    feature_node["cur_pose"].push_back(poseitem);
-                }
-            }
-
-            for (auto poseitem : onefeature.target_rela_pose)
-            {
-                feature_node["target_rela_pose"].push_back(poseitem);
-            }
-            feature_array.push_back(feature_node);
-        }
-
-        config_node.push_back(feature_array);       // 这里 mark here  need modify ， push all or push one 
-
-        */
-
         YAML::Node feature_node;
         std::string feature_name = pcd_file_prefix + "_" + std::to_string(file_index);
         feature_node["name"] = feature_name;
@@ -360,11 +307,6 @@ void cloudCBLaser(const sensor_msgs::LaserScan::ConstPtr& Laser)
         std::ofstream fout(outconfigfile);
         fout << config_node;
         fout.close();
-
-        
-
-
-
 
         std::string filename = filepath + feature_name + ".pcd";
         pcl::io::savePCDFileASCII (filename, cloudscan);
@@ -440,6 +382,10 @@ int main (int argc, char **argv)
     nh.getParam("feature_file", outconfigfile);
     nh.getParam("pcd_file_prefix", pcd_file_prefix);
     nh.getParam("scan_topic", scan_topic);
+    nh.getParam("laser_pose", laser_pose);
+    nh.getParam("laser_frame", laser_frame);
+    ROS_INFO("laser_pose , x : %f ,y : %f ,z : %f, roll : %f, pitch : %f, yaw : %f ",laser_pose[0],laser_pose[1],laser_pose[2],laser_pose[3],laser_pose[4],laser_pose[5]);
+
     tf_listener = std::make_shared<tf2_ros::TransformListener>(buffer_);
     state_ = STA_WAIT;
 
