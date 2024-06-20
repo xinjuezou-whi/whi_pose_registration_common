@@ -11,7 +11,7 @@ All text above must be included in any redistribution.
 
 Changelog:
 2024-06-05: Initial version
-2024-06-06:  
+2024-06-20:  add curpose orientation yaw angle
 ******************************************************************/
 #include <ros/ros.h>
 #include <pcl/point_cloud.h>
@@ -190,6 +190,10 @@ void cloudCBLaser(const sensor_msgs::LaserScan::ConstPtr& Laser)
 
 
         pcl::copyPointCloud(cloudout, cloudscan);
+        std::string old_feature = "oldfeature";
+        std::string oldfilename = filepath + old_feature + ".pcd";
+        pcl::io::savePCDFileASCII (oldfilename, cloudscan);
+
         geometry_msgs::TransformStamped lasertransform;
         lasertransform.header.frame_id = laser_frame;
         lasertransform.child_frame_id = laser_frame;
@@ -258,7 +262,8 @@ void cloudCBLaser(const sensor_msgs::LaserScan::ConstPtr& Laser)
         curpose.position.z = transBaselinkMap.transform.translation.z;
         curpose.position.x = std::round(curpose.position.x * 1000) / 1000.0;
         curpose.position.y = std::round(curpose.position.y * 1000) / 1000.0;
-        curpose.position.z = std::round(curpose.position.z * 1000) / 1000.0;
+        curpose.orientation = transBaselinkMap.transform.rotation;
+        //curpose.position.z = std::round(curpose.position.z * 1000) / 1000.0;
         ROS_INFO("curpose x:%f, y:%f, z:%f ",curpose.position.x,curpose.position.y,curpose.position.z);
 
                 
@@ -298,7 +303,7 @@ void cloudCBLaser(const sensor_msgs::LaserScan::ConstPtr& Laser)
         feature_node["feature_pose"].push_back(0.0);
         feature_node["cur_pose"].push_back(curpose.position.x);
         feature_node["cur_pose"].push_back(curpose.position.y);
-        feature_node["cur_pose"].push_back(curpose.position.z);
+        feature_node["cur_pose"].push_back(PoseUtilities::toEuler(curpose.orientation)[2]);
         feature_node["target_relative_pose"].push_back(0.0);
         feature_node["target_relative_pose"].push_back(0.0);
         feature_node["target_relative_pose"].push_back(0.0);
@@ -363,7 +368,7 @@ void sigintHandler(int sig)
 int main (int argc, char **argv)
 {
 
-    std::cout << "\nWHI tool create pcd pattern VERSION 00.01.1" << std::endl;
+    std::cout << "\nWHI tool create pcd pattern VERSION 00.01.2" << std::endl;
 	std::cout << "Copyright © 2024-2025 Wheel Hub Intelligent Co.,Ltd. All rights reserved\n" << std::endl;
     std::cout << "input key 's' to get scan cloud " << std::endl;
 
