@@ -11,7 +11,8 @@ All text above must be included in any redistribution.
 
 Changelog:
 2024-06-05: Initial version
-2024-06-20:  add curpose orientation yaw angle
+2024-06-20: add curpose orientation yaw angle
+2024-06-21: featurepose getinitvertical and horizon Reverse order
 ******************************************************************/
 #include <ros/ros.h>
 #include <pcl/point_cloud.h>
@@ -46,7 +47,8 @@ struct Feature
 enum State
 {
     STA_GET_SCAN = 0,
-    STA_WAIT
+    STA_WAIT,
+    STA_QUIT
     
 };
 
@@ -290,16 +292,11 @@ void cloudCBLaser(const sensor_msgs::LaserScan::ConstPtr& Laser)
         
         YAML::Node config_node = YAML::LoadFile(outconfigfile.c_str());
 
-        YAML::Node new_array;
-        new_array.push_back(getinithorizon);
-        new_array.push_back(getinitvertical);
-        new_array.push_back(0.0);
-
         YAML::Node feature_node;
         std::string feature_name = pcd_file_prefix + "_" + std::to_string(file_index);
         feature_node["name"] = feature_name;
-        feature_node["feature_pose"].push_back(getinithorizon);
         feature_node["feature_pose"].push_back(getinitvertical);
+        feature_node["feature_pose"].push_back(getinithorizon);
         feature_node["feature_pose"].push_back(0.0);
         feature_node["cur_pose"].push_back(curpose.position.x);
         feature_node["cur_pose"].push_back(curpose.position.y);
@@ -323,31 +320,12 @@ void cloudCBLaser(const sensor_msgs::LaserScan::ConstPtr& Laser)
         ROS_INFO("get scan, save file ,state = sta_wait");
         state_ = STA_WAIT;
     }
-
-
-}
-
-void userInput()
-{
-	while (!terminating.load())
-	{
-		int ch = getchar();
-        std::lock_guard<std::mutex> lock(mtx_state_);
-		switch (ch)
-		{
-		case 32: // s
-			// stop
-			if (state_ == STA_WAIT)
-			{
-				state_ = STA_GET_SCAN;
-                ROS_INFO("key input , start get scan ----");
-			}
-			break;
-
-
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    else if (state_ == STA_QUIT)
+    {
+        ros::shutdown();
     }
+
+
 }
 
 void sigintHandler(int sig)
@@ -363,12 +341,42 @@ void sigintHandler(int sig)
 	ros::shutdown();
 }
 
+void userInput()
+{
+	while (!terminating.load())
+	{
+		int ch = getchar();
+        std::lock_guard<std::mutex> lock(mtx_state_);
+		switch (ch)
+		{
+		case 115: // s
+			// start get 
+			if (state_ == STA_WAIT)
+			{
+				state_ = STA_GET_SCAN;
+                ROS_INFO("key input , start get scan ----");
+			}
+			break;
+		case 113: // q
+			// quit 
+			//ros::shutdown();
+            state_ = STA_QUIT;
+			break;            
+
+
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+
+
 // type key s to get scan cloud 
  
 int main (int argc, char **argv)
 {
 
-    std::cout << "\nWHI tool create pcd pattern VERSION 00.01.2" << std::endl;
+    std::cout << "\nWHI tool create pcd pattern VERSION 00.01.3" << std::endl;
 	std::cout << "Copyright © 2024-2025 Wheel Hub Intelligent Co.,Ltd. All rights reserved\n" << std::endl;
     std::cout << "input key 's' to get scan cloud " << std::endl;
 
