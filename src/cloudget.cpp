@@ -301,9 +301,9 @@ void cloudCBLaser(const sensor_msgs::LaserScan::ConstPtr& Laser)
         feature_node["cur_pose"].push_back(curpose.position.x);
         feature_node["cur_pose"].push_back(curpose.position.y);
         feature_node["cur_pose"].push_back(PoseUtilities::toEuler(curpose.orientation)[2]);
+        YAML::Node target_node;
         feature_node["target_relative_pose"].push_back(0.0);
-        feature_node["target_relative_pose"].push_back(0.0);
-        feature_node["target_relative_pose"].push_back(0.0);
+        feature_node["using_inertial"].push_back(0);
         config_node.push_back(feature_node);
 
         std::ofstream fout(outconfigfile);
