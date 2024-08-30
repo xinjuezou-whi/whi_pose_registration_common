@@ -2,9 +2,25 @@
 feature_file: /home/nvidia/catkin_workspace/src/whi_tool_create_pcd_pattern/config/features1.yaml
 pcd_file_path: /home/nvidia/catkin_workspace/src/whi_tool_create_pcd_pattern/pcd/
 pcd_file_prefix: getscan
-feature_range: [2, -2, 1, -2]   # xmax  xmin  ymax  ymin
-map_frame: odom
-base_link_frame: base_link
-scan_topic: /scan
-laser_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 180.0] # [x, y, z, roll, pitch, yaw]
-laser_frame: laser
+feature_range: [2, -2, 0.21, -0.25]   # xmax  xmin  ymax  ymin
+map_frame: map   #odom
+base_link_frame: whi/base_link    #base_link
+scan_topic: /whi/scan     #/scan
+laser_pose: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0] # [x, y, z, roll, pitch, yaw]
+laser_frame: whi/laser    #laser
+#for segment 
+model_cloud_file: /home/nvidia/catkin_workspace/src/whi_tool_create_pcd_pattern/pcd/target.pcd
+radius_delta: 0.03
+pattern_met_radius_thresh: 0.08
+ndt_sample_coeffs: [0.008, 0.008, 0.008]  # 0.005
+ndt_maxiter: 1000  #14000
+# cut min
+mincut_size: 350
+sigma: 0.25
+weight: 0.8
+cut_min_neighbour: 10
+# segment don(normal)
+seg_normal_min_scale: 1
+seg_normal_max_scale: 2
+seg_threshold: 0.0005  # 0.05 | 0.03 for slamtech  , 0.0005 for lakibeam
+seg_radius: 0.03     # 0.04 | 0.08

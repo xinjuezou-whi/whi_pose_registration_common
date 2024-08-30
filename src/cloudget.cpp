@@ -78,6 +78,7 @@ std::string laser_frame;
 //param for segment
 std::string model_cloud_file_;
 pcl::PointCloud<pcl::PointXYZ>::Ptr target_cloud_;
+double radius_delta_{ 0.03 };
 double pattern_met_radius_thresh_{ 0.05 };
 std::vector<float> ndtsample_coeffs_;
 int ndtmaxiter_;
@@ -453,7 +454,7 @@ void cloudCBLaser(const sensor_msgs::LaserScan::ConstPtr& Laser)
         mypoint center;
         min_circle_cover(pvec, minradius, center);
         ROS_INFO("outcloud ,radius : %.10lf \n  center.x: %.10lf center.y: %.10lf ",minradius,center.x, center.y);
-        minradius = minradius + 0.03; 
+        minradius = minradius + radius_delta_; 
 
         /*
         // 求模板点云的最小包围圆半径，作比较
@@ -707,6 +708,7 @@ int main (int argc, char **argv)
     nh.param("seg_radius", seg_radius_, 5.0);
 
     nh.param("ndt_maxiter", ndtmaxiter_, 5000);
+    nh.param("radius_delta",radius_delta_,0.03);
     nh.param("pattern_met_radius_thresh",pattern_met_radius_thresh_,0.4);
     if (!nh.getParam("pose_registration/LocatePose/ndt_sample_coeffs", ndtsample_coeffs_))
     {
